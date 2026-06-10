@@ -1,0 +1,548 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>条形码生成器</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --panel: #fff;
+      --text: #182033;
+      --muted: #68748c;
+      --line: #d9dfeb;
+      --accent: #2563eb;
+      --accent-dark: #1d4ed8;
+      --danger: #d92d20;
+      --soft: #eef4ff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+      font-size: 14px;
+    }
+
+    header {
+      padding: 22px 28px 14px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--line);
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 24px;
+    }
+
+    .hint {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: 380px minmax(0, 1fr);
+      gap: 18px;
+      padding: 18px 28px 28px;
+    }
+
+    section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .section-head {
+      padding: 14px 16px;
+      background: #fbfcff;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    .form {
+      display: grid;
+      gap: 14px;
+      padding: 16px;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: #34405a;
+      font-weight: 700;
+    }
+
+    label small {
+      color: var(--muted);
+      font-weight: 400;
+      line-height: 1.5;
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 9px;
+      color: var(--text);
+      font: inherit;
+      background: #fff;
+    }
+
+    textarea {
+      min-height: 92px;
+      resize: vertical;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      border-radius: 6px;
+      padding: 9px 12px;
+      cursor: pointer;
+      font: inherit;
+    }
+
+    button:hover {
+      border-color: #a8b4ca;
+    }
+
+    button.primary {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+      font-weight: 700;
+    }
+
+    button.primary:hover {
+      background: var(--accent-dark);
+    }
+
+    .notice {
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .notice.error {
+      display: none;
+      color: var(--danger);
+      background: #fff4f2;
+      border-color: #ffd4d0;
+    }
+
+    .preview-wrap {
+      padding: 24px;
+    }
+
+    .barcode-card {
+      display: grid;
+      gap: 14px;
+      justify-items: center;
+      align-items: center;
+      min-height: 420px;
+      padding: 56px 32px;
+      border: 1px dashed #c9d4e8;
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .barcode-box {
+      display: grid;
+      place-items: center;
+      width: 100%;
+      min-height: 220px;
+      overflow-x: auto;
+      text-align: center;
+    }
+
+    #barcodeSvg {
+      max-width: 100%;
+      height: auto;
+      background: #fff;
+    }
+
+    .empty {
+      color: var(--muted);
+      padding: 80px 16px;
+      text-align: center;
+    }
+
+    .batch {
+      margin-top: 16px;
+      border-top: 1px solid var(--line);
+      padding-top: 16px;
+    }
+
+    .batch-list {
+      display: grid;
+      gap: 12px;
+      max-height: 420px;
+      overflow: auto;
+    }
+
+    .batch-item {
+      padding: 28px 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      text-align: center;
+    }
+
+    .batch-item svg {
+      max-width: 100%;
+      height: auto;
+    }
+
+    @media (max-width: 900px) {
+      main {
+        grid-template-columns: 1fr;
+        padding: 14px;
+      }
+
+      header {
+        padding: 18px 14px 12px;
+      }
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      header,
+      .controls,
+      .batch {
+        display: none;
+      }
+
+      main {
+        display: block;
+        padding: 0;
+      }
+
+      section {
+        border: 0;
+      }
+
+      .preview-wrap {
+        padding: 0;
+      }
+
+      .barcode-card {
+        border: 0;
+        min-height: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>条形码生成器</h1>
+    <p class="hint">输入 SKU、货号、订单号等编码，生成 Code 128 条形码。支持下载 SVG/PNG，也可以批量生成后打印。</p>
+  </header>
+
+  <main>
+    <section class="controls">
+      <div class="section-head">
+        <h2>生成设置</h2>
+      </div>
+      <div class="form">
+        <label>
+          编码内容
+          <textarea id="codeInput" placeholder="例如：SKU-20260609-001">SKU-20260609-001</textarea>
+          <small>单个条码直接输入一行；批量生成时每行一个编码。</small>
+        </label>
+
+        <div class="grid-2">
+          <label>
+            条码宽度
+            <input id="barScale" type="number" value="2" min="1" max="6" step="0.5">
+          </label>
+          <label>
+            条码高度
+            <input id="barHeight" type="number" value="90" min="30" max="260">
+          </label>
+        </div>
+
+        <div class="grid-2">
+          <label>
+            左右留白
+            <input id="quietZone" type="number" value="20" min="0" max="100">
+          </label>
+          <label>
+            下方文字
+            <select id="showText">
+              <option value="yes">显示</option>
+              <option value="no">不显示</option>
+            </select>
+          </label>
+        </div>
+
+        <label>
+          文件名
+          <input id="fileName" value="barcode">
+        </label>
+
+        <div id="errorBox" class="notice error"></div>
+
+        <div class="toolbar">
+          <button id="downloadSvgBtn" class="primary" type="button">下载 SVG</button>
+          <button id="downloadPngBtn" type="button">下载 PNG</button>
+          <button id="printBtn" type="button">打印当前条码</button>
+          <button id="batchBtn" type="button">批量预览</button>
+        </div>
+
+        <div class="notice">提示：如果要扫码枪识别更稳，建议条码高度至少 70，左右留白至少 15。</div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <h2>条形码预览</h2>
+      </div>
+      <div class="preview-wrap">
+        <div class="barcode-card">
+          <div class="barcode-box" id="barcodeBox"></div>
+        </div>
+        <div class="batch" id="batchArea" style="display:none;">
+          <h2>批量预览</h2>
+          <div id="batchList" class="batch-list"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const patterns = [
+      "212222", "222122", "222221", "121223", "121322", "131222", "122213", "122312", "132212", "221213",
+      "221312", "231212", "112232", "122132", "122231", "113222", "123122", "123221", "223211", "221132",
+      "221231", "213212", "223112", "312131", "311222", "321122", "321221", "312212", "322112", "322211",
+      "212123", "212321", "232121", "111323", "131123", "131321", "112313", "132113", "132311", "211313",
+      "231113", "231311", "112133", "112331", "132131", "113123", "113321", "133121", "313121", "211331",
+      "231131", "213113", "213311", "213131", "311123", "311321", "331121", "312113", "312311", "332111",
+      "314111", "221411", "431111", "111224", "111422", "121124", "121421", "141122", "141221", "112214",
+      "112412", "122114", "122411", "142112", "142211", "241211", "221114", "413111", "241112", "134111",
+      "111242", "121142", "121241", "114212", "124112", "124211", "411212", "421112", "421211", "212141",
+      "214121", "412121", "111143", "111341", "131141", "114113", "114311", "411113", "411311", "113141",
+      "114131", "311141", "411131", "211412", "211214", "211232", "2331112"
+    ];
+
+    const codeInput = document.getElementById("codeInput");
+    const barcodeBox = document.getElementById("barcodeBox");
+    const errorBox = document.getElementById("errorBox");
+
+    function showError(message) {
+      errorBox.textContent = message || "";
+      errorBox.style.display = message ? "block" : "none";
+    }
+
+    function escapeXml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll("\"", "&quot;");
+    }
+
+    function safeFileName(value) {
+      return String(value || "barcode").trim().replace(/[\\/:*?"<>|]/g, "_") || "barcode";
+    }
+
+    function getOptions() {
+      return {
+        scale: Number(document.getElementById("barScale").value || 2),
+        height: Number(document.getElementById("barHeight").value || 90),
+        quiet: Number(document.getElementById("quietZone").value || 20),
+        showText: document.getElementById("showText").value === "yes"
+      };
+    }
+
+    function validateCode(code) {
+      if (!code.trim()) return "请输入编码内容。";
+      for (const char of code) {
+        const codePoint = char.charCodeAt(0);
+        if (codePoint < 32 || codePoint > 126) {
+          return "当前版本支持英文、数字和常见英文符号。中文或俄文不能直接生成 Code 128 条码，请改用英文/数字编码。";
+        }
+      }
+      return "";
+    }
+
+    function encodeCode128B(code) {
+      const values = [104];
+      for (const char of code) {
+        values.push(char.charCodeAt(0) - 32);
+      }
+      let checksum = 104;
+      for (let i = 1; i < values.length; i += 1) {
+        checksum += values[i] * i;
+      }
+      values.push(checksum % 103, 106);
+      return values;
+    }
+
+    function makeSvg(code, options = getOptions()) {
+      const problem = validateCode(code);
+      if (problem) throw new Error(problem);
+
+      const values = encodeCode128B(code);
+      const scale = Math.max(1, Number(options.scale) || 2);
+      const barHeight = Math.max(30, Number(options.height) || 90);
+      const quiet = Math.max(0, Number(options.quiet) || 0);
+      const textHeight = options.showText ? 30 : 0;
+      let x = quiet;
+      const rects = [];
+
+      values.forEach((value) => {
+        const pattern = patterns[value];
+        for (let i = 0; i < pattern.length; i += 1) {
+          const width = Number(pattern[i]) * scale;
+          if (i % 2 === 0) {
+            rects.push(`<rect x="${x}" y="0" width="${width}" height="${barHeight}" fill="#000"/>`);
+          }
+          x += width;
+        }
+      });
+
+      const width = x + quiet;
+      const height = barHeight + textHeight;
+      const text = options.showText
+        ? `<text x="${width / 2}" y="${barHeight + 22}" text-anchor="middle" font-family="Arial, sans-serif" font-size="18">${escapeXml(code)}</text>`
+        : "";
+
+      return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="Barcode ${escapeXml(code)}"><rect width="100%" height="100%" fill="#fff"/>${rects.join("")}${text}</svg>`;
+    }
+
+    function currentCode() {
+      return codeInput.value.split(/\r?\n/)[0].trim();
+    }
+
+    function renderSingle() {
+      const code = currentCode();
+      try {
+        barcodeBox.innerHTML = makeSvg(code);
+        showError("");
+      } catch (error) {
+        barcodeBox.innerHTML = `<div class="empty">${escapeXml(error.message)}</div>`;
+        showError(error.message);
+      }
+    }
+
+    function downloadBlob(blob, fileName) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      a.style.display = "none";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 3000);
+    }
+
+    function downloadSvg() {
+      const code = currentCode();
+      const svg = makeSvg(code);
+      const fileName = `${safeFileName(document.getElementById("fileName").value || code)}.svg`;
+      downloadBlob(new Blob([svg], { type: "image/svg+xml;charset=utf-8" }), fileName);
+    }
+
+    function downloadPng() {
+      const code = currentCode();
+      const svg = makeSvg(code);
+      const img = new Image();
+      const svgBlob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
+      const url = URL.createObjectURL(svgBlob);
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+        URL.revokeObjectURL(url);
+        canvas.toBlob((blob) => {
+          const fileName = `${safeFileName(document.getElementById("fileName").value || code)}.png`;
+          downloadBlob(blob, fileName);
+        }, "image/png");
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        showError("PNG 生成失败，请先下载 SVG。");
+      };
+      img.src = url;
+    }
+
+    function renderBatch() {
+      const codes = codeInput.value.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+      const batchArea = document.getElementById("batchArea");
+      const batchList = document.getElementById("batchList");
+      batchList.innerHTML = "";
+      if (!codes.length) {
+        showError("请输入至少一个编码。");
+        return;
+      }
+
+      try {
+        codes.forEach((code) => {
+          const item = document.createElement("div");
+          item.className = "batch-item";
+          item.innerHTML = makeSvg(code);
+          batchList.appendChild(item);
+        });
+        batchArea.style.display = "block";
+        showError("");
+      } catch (error) {
+        showError(error.message);
+      }
+    }
+
+    codeInput.addEventListener("input", renderSingle);
+    ["barScale", "barHeight", "quietZone", "showText"].forEach((id) => {
+      document.getElementById(id).addEventListener("input", renderSingle);
+      document.getElementById(id).addEventListener("change", renderSingle);
+    });
+    document.getElementById("downloadSvgBtn").addEventListener("click", () => {
+      try { downloadSvg(); } catch (error) { showError(error.message); }
+    });
+    document.getElementById("downloadPngBtn").addEventListener("click", () => {
+      try { downloadPng(); } catch (error) { showError(error.message); }
+    });
+    document.getElementById("printBtn").addEventListener("click", () => window.print());
+    document.getElementById("batchBtn").addEventListener("click", renderBatch);
+
+    renderSingle();
+  </script>
+</body>
+</html>
