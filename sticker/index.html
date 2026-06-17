@@ -1,0 +1,747 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>不干胶 PDF 生成器</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --text: #182033;
+      --muted: #64708a;
+      --line: #d9dfeb;
+      --accent: #c4143d;
+      --accent-dark: #9f0f31;
+      --danger: #d92d20;
+      --soft: #fff0f4;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+      font-size: 14px;
+    }
+
+    header {
+      padding: 24px 32px 16px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--line);
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 26px;
+    }
+
+    .hint {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: 460px minmax(0, 1fr);
+      gap: 24px;
+      padding: 24px 32px 32px;
+    }
+
+    section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .section-head {
+      padding: 16px 18px;
+      background: #fbfcff;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    .form {
+      display: grid;
+      gap: 14px;
+      padding: 18px;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: #34405a;
+      font-weight: 700;
+    }
+
+    label small {
+      color: var(--muted);
+      font-weight: 400;
+      line-height: 1.5;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 10px;
+      color: var(--text);
+      font: inherit;
+      line-height: 1.45;
+      background: #fff;
+    }
+
+    textarea {
+      min-height: 82px;
+      resize: vertical;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      border-radius: 6px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font: inherit;
+    }
+
+    button.primary {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+      font-weight: 700;
+    }
+
+    button.primary:hover {
+      background: var(--accent-dark);
+    }
+
+    .notice {
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      background: #f8fafc;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .error {
+      display: none;
+      color: var(--danger);
+      border-color: #ffd4d0;
+      background: #fff4f2;
+    }
+
+    .preview-wrap {
+      display: grid;
+      place-items: center;
+      min-height: 760px;
+      padding: 28px;
+      background:
+        linear-gradient(45deg, #f7f8fc 25%, transparent 25%),
+        linear-gradient(-45deg, #f7f8fc 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #f7f8fc 75%),
+        linear-gradient(-45deg, transparent 75%, #f7f8fc 75%);
+      background-size: 22px 22px;
+      background-position: 0 0, 0 11px, 11px -11px, -11px 0;
+    }
+
+    canvas {
+      max-width: min(100%, 560px);
+      height: auto;
+      background: #fff;
+      box-shadow: 0 16px 42px rgba(24, 32, 51, 0.18);
+    }
+
+    @media (max-width: 960px) {
+      main {
+        grid-template-columns: 1fr;
+        padding: 14px;
+      }
+
+      header {
+        padding: 18px 14px 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>不干胶 PDF 生成器</h1>
+    <p class="hint">按模板生成 50×70mm 俄语不干胶。logo、右上宣传语、品牌名、底部认证标识都使用原 PDF 模板固定底图，只覆盖可填写内容。</p>
+  </header>
+
+  <main>
+    <section>
+      <div class="section-head">
+        <h2>填写信息</h2>
+      </div>
+      <div class="form">
+        <div class="grid-2">
+          <label>
+            宽度（mm）
+            <input id="labelWidth" type="number" value="50" min="30" max="120" step="1">
+          </label>
+          <label>
+            高度（mm）
+            <input id="labelHeight" type="number" value="70" min="30" max="160" step="1">
+          </label>
+        </div>
+
+        <label>
+          Материал:
+          <input id="material" value="Силикон">
+        </label>
+
+        <label>
+          Размеры:
+          <input id="dimensions" value="78×71×218mm">
+        </label>
+
+        <label>
+          Вводимый размер:
+          <input id="insertableSize" value="41×150мм">
+        </label>
+
+        <label>
+          Производитель:
+          <textarea id="manufacturer">Huizhou Sangsine Intelligent Technology Co., Ltd.</textarea>
+        </label>
+
+        <label>
+          Адрес:
+          <textarea id="address">Building 14, Huashun High-Tech Industrial Park, No. 8 Baiyuan North Road, Shawan Town, Boluo County, Huizhou City, Guangdong Province, China.</textarea>
+        </label>
+
+        <div class="grid-2">
+          <label>
+            字段名字号（pt）
+            <small>控制冒号前固定文字</small>
+            <input id="labelFontSize" type="number" value="7.2" min="4" max="12" step="0.1">
+          </label>
+          <label>
+            正文字号（pt）
+            <small>控制冒号后输入内容</small>
+            <input id="valueFontSize" type="number" value="7.2" min="4" max="12" step="0.1">
+          </label>
+        </div>
+
+        <div class="grid-2">
+          <label>
+            页边距（mm）
+            <small>控制表格离边缘距离</small>
+            <input id="marginMm" type="number" value="1.8" min="0.5" max="8" step="0.1">
+          </label>
+          <label>
+            行高联动
+            <small>总高度固定，数值会按比例分配</small>
+            <input value="固定总高度" disabled>
+          </label>
+        </div>
+
+        <div class="grid-2">
+          <label>
+            品牌行高
+            <input id="rowBrand" type="number" value="1.1" min="0.6" max="3" step="0.1">
+          </label>
+          <label>
+            材质行高
+            <input id="rowMaterial" type="number" value="1" min="0.6" max="3" step="0.1">
+          </label>
+          <label>
+            尺寸行高
+            <input id="rowDimensions" type="number" value="1" min="0.6" max="3" step="0.1">
+          </label>
+          <label>
+            输入尺寸行高
+            <input id="rowInsertable" type="number" value="1" min="0.6" max="3" step="0.1">
+          </label>
+          <label>
+            生产商行高
+            <input id="rowManufacturer" type="number" value="2.3" min="1" max="5" step="0.1">
+          </label>
+          <label>
+            地址行高
+            <input id="rowAddress" type="number" value="4.1" min="1" max="8" step="0.1">
+          </label>
+        </div>
+
+        <label>
+          文件名
+          <input id="fileName" value="不干胶标签">
+        </label>
+
+        <div id="errorBox" class="notice error"></div>
+
+        <div class="toolbar">
+          <button id="downloadPdfBtn" class="primary" type="button">生成 PDF</button>
+          <button id="downloadPngBtn" type="button">下载 PNG 预览</button>
+        </div>
+
+        <div class="notice">说明：顶部 Logo、宣传语、底部标识和 Made in China 来自原 PDF 模板；中间表格会重新绘制，字段名、正文和每行高度可单独调整。</div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <h2>实时预览</h2>
+      </div>
+      <div class="preview-wrap">
+        <canvas id="previewCanvas"></canvas>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("previewCanvas");
+    const ctx = canvas.getContext("2d");
+    const templateImage = new Image();
+    templateImage.src = "../assets/sticker-template-fixed.png";
+    templateImage.onload = render;
+
+    function mmToPx(mm, scale) {
+      return mm * scale;
+    }
+
+    function mmToPt(mm) {
+      return mm / 25.4 * 72;
+    }
+
+    function ptToPx(pt, scale) {
+      return mmToPx(pt * 25.4 / 72, scale);
+    }
+
+    function value(id) {
+      return document.getElementById(id).value.trim();
+    }
+
+    const templateDefaults = {
+      material: "Силикон",
+      dimensions: "78×71×218mm",
+      insertableSize: "41×150мм",
+      manufacturer: "Huizhou Sangsine Intelligent Technology Co., Ltd.",
+      address: "Building 14, Huashun High-Tech Industrial Park, No. 8 Baiyuan North Road, Shawan Town, Boluo County, Huizhou City, Guangdong Province, China."
+    };
+
+    function safeFileName(name) {
+      return String(name || "sticker").trim().replace(/[\\/:*?"<>|]/g, "_") || "sticker";
+    }
+
+    function showError(message) {
+      const box = document.getElementById("errorBox");
+      box.textContent = message || "";
+      box.style.display = message ? "block" : "none";
+    }
+
+    function textWidth(text, font) {
+      ctx.save();
+      ctx.font = font;
+      const width = ctx.measureText(text).width;
+      ctx.restore();
+      return width;
+    }
+
+    function wrapText(text, maxWidth, font) {
+      const normalized = String(text || "").replace(/\s+/g, " ").trim();
+      if (!normalized) return [""];
+      const words = normalized.split(" ");
+      const lines = [];
+      let line = "";
+      ctx.save();
+      ctx.font = font;
+      words.forEach((word) => {
+        const candidate = line ? `${line} ${word}` : word;
+        if (ctx.measureText(candidate).width <= maxWidth || !line) {
+          line = candidate;
+        } else {
+          lines.push(line);
+          line = word;
+        }
+      });
+      if (line) lines.push(line);
+      ctx.restore();
+      return lines;
+    }
+
+    function drawText(text, x, y, font, fill = "#2e2928") {
+      ctx.font = font;
+      ctx.fillStyle = fill;
+      ctx.textBaseline = "alphabetic";
+      ctx.fillText(text, x, y);
+    }
+
+    function splitLines(text, maxWidth, font) {
+      const words = String(text || "").replace(/\s+/g, " ").trim().split(" ").filter(Boolean);
+      const lines = [];
+      let line = "";
+
+      ctx.save();
+      ctx.font = font;
+      words.forEach((word) => {
+        const candidate = line ? `${line} ${word}` : word;
+        if (ctx.measureText(candidate).width <= maxWidth || !line) {
+          line = candidate;
+        } else {
+          lines.push(line);
+          line = word;
+        }
+      });
+      if (line) lines.push(line);
+      if (!lines.length) lines.push("");
+      ctx.restore();
+      return lines;
+    }
+
+    function splitInlineLines(text, firstWidth, nextWidth, font) {
+      const words = String(text || "").replace(/\s+/g, " ").trim().split(" ").filter(Boolean);
+      const lines = [];
+      let line = "";
+
+      ctx.save();
+      ctx.font = font;
+      words.forEach((word) => {
+        const maxWidth = lines.length ? nextWidth : firstWidth;
+        const candidate = line ? `${line} ${word}` : word;
+        if (ctx.measureText(candidate).width <= maxWidth || !line) {
+          line = candidate;
+        } else {
+          lines.push(line);
+          line = word;
+        }
+      });
+      if (line) lines.push(line);
+      if (!lines.length) lines.push("");
+      ctx.restore();
+      return lines;
+    }
+
+    function px(mm) {
+      return mmToPx(mm, scale);
+    }
+
+    function cover(x, y, w, h) {
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(px(x), px(y), px(w), px(h));
+    }
+
+    function rowWeights() {
+      return [
+        Number(value("rowBrand") || 1.1),
+        Number(value("rowMaterial") || 1),
+        Number(value("rowDimensions") || 1),
+        Number(value("rowInsertable") || 1),
+        Number(value("rowManufacturer") || 2.3),
+        Number(value("rowAddress") || 4.1)
+      ].map((item) => Math.max(0.2, item));
+    }
+
+    function tableRows() {
+      const left = 1.75;
+      const right = 48.0;
+      const top = 8.7;
+      const bottom = 52.45;
+      const total = bottom - top;
+      const weights = rowWeights();
+      const weightSum = weights.reduce((sum, item) => sum + item, 0);
+      let cursor = top;
+      return weights.map((weight) => {
+        const h = total * weight / weightSum;
+        const row = { top: cursor, bottom: cursor + h, height: h, left, right, width: right - left };
+        cursor += h;
+        return row;
+      });
+    }
+
+    function drawTableBody(rows) {
+      const left = 1.75;
+      const right = 48.0;
+      const top = 8.7;
+      const bottom = 52.45;
+      cover(left, top - 0.85, right - left, bottom - top + 0.85);
+      ctx.strokeStyle = "#4d4745";
+      ctx.lineWidth = Math.max(1, scale * 0.08);
+      ctx.beginPath();
+      ctx.rect(px(left), px(top), px(right - left), px(bottom - top));
+      rows.slice(0, -1).forEach((row) => {
+        const y = row.bottom;
+        ctx.moveTo(px(left), px(y));
+        ctx.lineTo(px(right), px(y));
+      });
+      ctx.stroke();
+    }
+
+    function drawBrandValue(x, y, font) {
+      drawText("AAV", x, y, font);
+      const mainWidth = textWidth("AAV", font);
+      const valueFontPx = ptToPx(Number(value("valueFontSize") || 7.2), scale);
+      const markFont = `700 ${valueFontPx * 0.42}px Arial, Helvetica, sans-serif`;
+      drawText("®", x + mainWidth + valueFontPx * 0.08, y - valueFontPx * 0.45, markFont);
+    }
+
+    function drawInlineField(label, text, row, maxLines = 1, options = {}) {
+      const labelFontPx = ptToPx(Number(value("labelFontSize") || 7.2), scale);
+      let valueFontPx = ptToPx(Number(value("valueFontSize") || 7.2), scale);
+      const labelFont = `700 ${labelFontPx}px Arial, Helvetica, sans-serif`;
+      let font = `${valueFontPx}px Arial, Helvetica, sans-serif`;
+      let lineHeight = valueFontPx * 1.38;
+      const labelText = `${label} `;
+      const labelW = textWidth(labelText, labelFont);
+      const x = row.left + 1.35;
+      const maxW = row.width - 2.7;
+      let lines = splitInlineLines(text, px(maxW) - labelW, px(maxW), font);
+
+      while (lines.length > maxLines && valueFontPx > ptToPx(4.1, scale)) {
+        valueFontPx *= 0.92;
+        font = `${valueFontPx}px Arial, Helvetica, sans-serif`;
+        lineHeight = valueFontPx * 1.38;
+        lines = splitInlineLines(text, px(maxW) - labelW, px(maxW), font);
+      }
+
+      const visibleLines = Math.min(lines.length, maxLines);
+      const contentHeight = Math.max(labelFontPx, visibleLines * lineHeight);
+      const baselineY = row.top + (row.height - contentHeight / scale) / 2 + Math.max(labelFontPx, valueFontPx) * 0.78 / scale;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(px(row.left + 0.35), px(row.top + 0.18), px(row.width - 0.7), px(row.height - 0.36));
+      ctx.clip();
+      ctx.textBaseline = "alphabetic";
+      drawText(labelText, px(x), px(baselineY), labelFont);
+      if (options.brand) {
+        drawBrandValue(px(x) + labelW, px(baselineY), font);
+      } else {
+        drawText(lines[0] || "", px(x) + labelW, px(baselineY), font);
+      }
+      for (let i = 1; i < visibleLines; i += 1) {
+        drawText(lines[i], px(x), px(baselineY) + i * lineHeight, font);
+      }
+      ctx.restore();
+    }
+
+    function drawValue(text, x, y, maxW, maxLines = 1, fontPx = ptToPx(Number(value("fontSize") || 7.2), scale)) {
+      let font = `${fontPx}px Arial, Helvetica, sans-serif`;
+      let lineHeight = lineHeightPx;
+      let lines = splitLines(text, px(maxW), font);
+      while (lines.length > maxLines && fontPx > ptToPx(4.2, scale)) {
+        fontPx *= 0.92;
+        lineHeight *= 0.92;
+        font = `${fontPx}px Arial, Helvetica, sans-serif`;
+        lines = splitLines(text, px(maxW), font);
+      }
+      ctx.font = font;
+      ctx.fillStyle = "#2e2928";
+      ctx.textBaseline = "alphabetic";
+      lines.slice(0, maxLines).forEach((line, i) => {
+        ctx.fillText(line, px(x), px(y) + i * lineHeight);
+      });
+    }
+
+    function drawLongValue(text, firstX, firstY, firstW, nextX, nextY, nextW, maxLines, fontPx = ptToPx(Number(value("fontSize") || 7.2), scale)) {
+      let font = `${fontPx}px Arial, Helvetica, sans-serif`;
+      let lineHeight = fontPx * 1.38;
+      const words = String(text || "").replace(/\s+/g, " ").trim().split(" ").filter(Boolean);
+      let lines = [];
+
+      function build() {
+        lines = [];
+        let line = "";
+        ctx.save();
+        ctx.font = font;
+        words.forEach((word) => {
+          const maxWidth = lines.length ? px(nextW) : px(firstW);
+          const candidate = line ? `${line} ${word}` : word;
+          if (ctx.measureText(candidate).width <= maxWidth || !line) {
+            line = candidate;
+          } else {
+            lines.push(line);
+            line = word;
+          }
+        });
+        if (line) lines.push(line);
+        if (!lines.length) lines.push("");
+        ctx.restore();
+      }
+
+      build();
+      while (lines.length > maxLines && fontPx > ptToPx(4.0, scale)) {
+        fontPx *= 0.92;
+        lineHeight = fontPx * 1.38;
+        font = `${fontPx}px Arial, Helvetica, sans-serif`;
+        build();
+      }
+
+      ctx.font = font;
+      ctx.fillStyle = "#2e2928";
+      ctx.textBaseline = "alphabetic";
+      lines.slice(0, maxLines).forEach((line, i) => {
+        const x = i === 0 ? firstX : nextX;
+        const y = i === 0 ? firstY : nextY + (i - 1) * lineHeight / scale;
+        ctx.fillText(line, px(x), px(y));
+      });
+    }
+
+    let scale = 12;
+    let lineHeightPx = 12;
+
+    function render() {
+      const widthMm = Number(value("labelWidth") || 50);
+      const heightMm = Number(value("labelHeight") || 70);
+
+      if (!widthMm || !heightMm) {
+        showError("请填写正确的不干胶尺寸。");
+        return;
+      }
+
+      showError("");
+      scale = Math.max(8, Math.round(600 / widthMm));
+      canvas.width = Math.round(widthMm * scale);
+      canvas.height = Math.round(heightMm * scale);
+
+      const W = canvas.width;
+      const H = canvas.height;
+      const fontSize = ptToPx(Number(value("valueFontSize") || 7.2), scale);
+      lineHeightPx = fontSize * 1.38;
+
+      ctx.clearRect(0, 0, W, H);
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, W, H);
+      if (templateImage.complete && templateImage.naturalWidth) {
+        ctx.drawImage(templateImage, 0, 0, W, H);
+      }
+
+      const rows = tableRows();
+      drawTableBody(rows);
+
+      drawInlineField("Название бренда:", "AAV®", rows[0], 1, { brand: true });
+      drawInlineField("Материал:", value("material") || templateDefaults.material, rows[1], 1);
+      drawInlineField("Размеры:", value("dimensions") || templateDefaults.dimensions, rows[2], 1);
+      drawInlineField("Вводимый размер:", value("insertableSize") || templateDefaults.insertableSize, rows[3], 1);
+      drawInlineField("Производитель:", value("manufacturer") || templateDefaults.manufacturer, rows[4], 2);
+      drawInlineField("Адрес:", value("address") || templateDefaults.address, rows[5], 4);
+    }
+
+    function dataUrlToBytes(dataUrl) {
+      const binary = atob(dataUrl.split(",")[1]);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+      return bytes;
+    }
+
+    function pdfEscape(text) {
+      return String(text).replace(/[\\()]/g, "\\$&");
+    }
+
+    function buildPdfFromCanvas() {
+      render();
+      const widthMm = Number(value("labelWidth") || 50);
+      const heightMm = Number(value("labelHeight") || 70);
+      const pageW = mmToPt(widthMm);
+      const pageH = mmToPt(heightMm);
+      const jpeg = dataUrlToBytes(canvas.toDataURL("image/jpeg", 0.95));
+      const objects = [];
+      const add = (body) => {
+        objects.push(body);
+        return objects.length;
+      };
+
+      const catalogId = add("<< /Type /Catalog /Pages 2 0 R >>");
+      const pagesId = add("<< /Type /Pages /Kids [3 0 R] /Count 1 >>");
+      const pageId = add(`<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 ${pageW.toFixed(3)} ${pageH.toFixed(3)}] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>`);
+      const imageId = add(`<< /Type /XObject /Subtype /Image /Width ${canvas.width} /Height ${canvas.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpeg.length} >>\nstream\n__IMAGE__\nendstream`);
+      const content = `q\n${pageW.toFixed(3)} 0 0 ${pageH.toFixed(3)} 0 0 cm\n/Im0 Do\nQ`;
+      const contentId = add(`<< /Length ${content.length} >>\nstream\n${content}\nendstream`);
+
+      let output = "%PDF-1.4\n";
+      const chunks = [new TextEncoder().encode(output)];
+      const offsets = [0];
+      let length = chunks[0].length;
+
+      objects.forEach((body, index) => {
+        offsets.push(length);
+        const header = `${index + 1} 0 obj\n`;
+        const footer = "\nendobj\n";
+        if (body.includes("__IMAGE__")) {
+          const [before, after] = body.split("__IMAGE__");
+          const parts = [new TextEncoder().encode(header + before), jpeg, new TextEncoder().encode(after + footer)];
+          parts.forEach((part) => {
+            chunks.push(part);
+            length += part.length;
+          });
+        } else {
+          const bytes = new TextEncoder().encode(header + body + footer);
+          chunks.push(bytes);
+          length += bytes.length;
+        }
+      });
+
+      const xrefOffset = length;
+      let xref = `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+      for (let i = 1; i <= objects.length; i += 1) {
+        xref += `${String(offsets[i]).padStart(10, "0")} 00000 n \n`;
+      }
+      xref += `trailer\n<< /Size ${objects.length + 1} /Root ${catalogId} 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;
+      chunks.push(new TextEncoder().encode(xref));
+      return new Blob(chunks, { type: "application/pdf" });
+    }
+
+    function downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.style.display = "none";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 3000);
+    }
+
+    function downloadPdf() {
+      const blob = buildPdfFromCanvas();
+      downloadBlob(blob, `${safeFileName(value("fileName"))}.pdf`);
+    }
+
+    function downloadPng() {
+      render();
+      canvas.toBlob((blob) => {
+        downloadBlob(blob, `${safeFileName(value("fileName"))}.png`);
+      }, "image/png");
+    }
+
+    document.querySelectorAll("input, textarea").forEach((input) => {
+      input.addEventListener("input", render);
+    });
+    document.getElementById("downloadPdfBtn").addEventListener("click", downloadPdf);
+    document.getElementById("downloadPngBtn").addEventListener("click", downloadPng);
+
+    if (document.fonts) {
+      document.fonts.ready.then(render);
+    }
+    render();
+  </script>
+</body>
+</html>
